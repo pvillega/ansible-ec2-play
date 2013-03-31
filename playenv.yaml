@@ -1,0 +1,56 @@
+# Sets the Play environment in the server
+# Run with: ansible-playbook -i hosts.ini playenv.yaml -u ubuntu --sudo
+---
+- hosts: ec2Instance
+  vars:
+  - ubuntu_release: quantal
+  - user: ubuntu
+  - group: $user
+  - repo_url: git://github.com/kaiinkinen/pvm.git
+  - repo_remote: origin
+  - repo_version: master
+  - pvm: /home/ubuntu/pvm
+  - play_version: 2.1.0
+
+
+  tasks:
+   - name: Redirect port 80 to 9000 
+     action: command iptables -t nat -F
+
+   - name: Redirect port 80 to 9000 
+     action: command iptables -t nat -A OUTPUT -d localhost -p tcp --dport 80 -j REDIRECT --to-ports 9000
+
+   - name: Redirect port 80 to 9000 
+     action: command iptables -t nat -I PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 9000 
+
+   - name: Remove old PVM checkouts
+     action: file path=${pvm} state=absent
+
+   - name: Checkout PVM from Git
+     action: git repo=$repo_url dest=$pvm remote=$repo_remote version=$repo_version
+
+   - name: Turn PVM into bash script
+     action: lineinfile dest=${pvm}/pvm.sh regexp="^# Play Version Manager" line="#!/bin/bash" state=present
+
+   - name: Set PVM environment and install Play $play_version
+     action: raw . ${pvm}/pvm.sh && pvm install $play_version && pvm use $play_version
+
+   - name: Set $user as PVM owner
+     action: file path=${pvm} owner=$user group=$group recurse=yes  state=directory
+
+   - name: Add Java repository to sources
+     action: apt_repository repo='ppa:webupd8team/java'
+
+   - name: Autoaccept license for Java
+     action: shell echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
+
+   - name: Update APT package cache
+     action: apt update_cache=yes
+
+   - name: Install Java 7
+     action: apt pkg=oracle-java7-installer state=latest install_recommends=yes    
+
+   - name: Set Java 7 Env
+     action: apt pkg=oracle-java7-set-default state=latest install_recommends=yes
+
+
