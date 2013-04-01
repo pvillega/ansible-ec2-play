@@ -1,6 +1,7 @@
 # More details on steps to secure at: http://www.thefanclub.co.za/how-to/how-secure-ubuntu-1204-lts-server-part-1-basics 
+# Remember to run: ufw enable after rebooting
 ---
-- hosts: newservers
+- hosts: ec2Instance
   vars:
   - ubuntu_release: quantal
   - logwatch_email: aracon81@gmail.com
@@ -63,50 +64,6 @@
    - name: Firewall allow https (ufw enable has to be run manually)
      action: command ufw allow https
 
-   # Harden network settings 
-   - name: IP Spoofing protection
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.conf\.all\.rp_filter" line="net.ipv4.conf.all.rp_filter = 1" state=present 
-   - name: IP Spoofing protection
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.conf\.default\.rp_filter" line="net.ipv4.conf.default.rp_filter = 1" state=present 
-   - name: Ignore ICMP broadcast requests
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.icmp_echo_ignore_broadcasts" line="net.ipv4.icmp_echo_ignore_broadcasts = 1" state=present  
-   - name: Disable source packet routing
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.conf\.all\.accept_source_route" line="net.ipv4.conf.all.accept_source_route = 0" state=present  
-   - name: Disable source packet routing
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv6\.conf\.all\.accept_source_route" line="net.ipv6.conf.all.accept_source_route = 0" state=present  
-   - name: Disable source packet routing
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.conf\.default\.accept_source_route" line="net.ipv4.conf.default.accept_source_route = 0" state=present  
-   - name: Disable source packet routing
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv6\.conf\.default\.accept_source_route" line="net.ipv6.conf.default.accept_source_route = 0" state=present     
-   - name: Ignore send redirects
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.conf\.all\.send_redirects" line="net.ipv4.conf.all.send_redirects = 0" state=present 
-   - name: Ignore send redirects
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.conf\.default\.send_redirects" line="net.ipv4.conf.default.send_redirects = 0" state=present 
-   - name: Block SYN attacks
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.tcp_syncookies" line="net.ipv4.tcp_syncookies = 1" state=present 
-   - name: Block SYN attacks
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.tcp_max_syn_backlog" line="net.ipv4.tcp_max_syn_backlog = 2048" state=present 
-   - name: Block SYN attacks
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.tcp_synack_retries" line="net.ipv4.tcp_synack_retries = 2" state=present 
-   - name: Block SYN attacks
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.tcp_syn_retries" line="net.ipv4.tcp_syn_retries = 5" state=present 
-   - name: Log Martians
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.conf\.all\.log_martians" line="net.ipv4.conf.all.log_martians = 1" state=present 
-   - name: Log Martians
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.icmp_ignore_bogus_error_responses" line="net.ipv4.icmp_ignore_bogus_error_responses = 1" state=present 
-   - name: Ignore ICMP redirects
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.conf\.all\.accept_redirects" line="net.ipv4.conf.all.accept_redirects = 0" state=present  
-   - name: Ignore ICMP redirects
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv6\.conf\.all\.accept_redirects" line="net.ipv6.conf.all.accept_redirects = 0" state=present  
-   - name: Ignore ICMP redirects
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.conf\.default\.accept_redirects" line="net.ipv4.conf.default.accept_redirects = 0" state=present  
-   - name: Ignore ICMP redirects
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv6\.conf\.default\.accept_redirects" line="net.ipv6.conf.default.accept_redirects = 0" state=present  
-   - name: Ignore Directed pings
-     action: lineinfile dest=/etc/sysctl.conf regexp="^#net\.ipv4\.icmp_echo_ignore_all" line="net.ipv4.icmp_echo_ignore_all = 1" state=present  
-   - name: Apply network settings
-     action: command sysctl -p 
-
    - name: Prevent IP spoofing
      action: lineinfile dest=/etc/host.conf regexp="^order" line="order bind,hosts" state=present  
    - name: Prevent IP spoofing
@@ -135,15 +92,14 @@
    - name: DenyHosts
      action: apt pkg=denyhosts state=present  
  
-   - name: Secure shm (reboots instance)
+   - name: Secure shm 
      action: lineinfile dest=/etc/fstab  regexp="^tmpfs" line="tmpfs     /dev/shm     tmpfs     defaults,noexec,nosuid     0     0" state=present
-     notify: Reboot
+
+   - name: Reboot
+     action: command reboot
 
   handlers:
    - name: Restart sshd
      action: service sshd state=restarted
-
-   - name: Reboot
-     action: command /sbin/reboot -t now
 
 

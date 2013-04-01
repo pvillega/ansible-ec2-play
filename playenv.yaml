@@ -12,17 +12,13 @@
   - pvm: /home/ubuntu/pvm
   - play_version: 2.1.0
 
-
   tasks:
-   - name: Redirect port 80 to 9000 
-     action: command iptables -t nat -F
+   - name: Install Authbind
+     action: apt pkg=authbind state=latest install_recommends=yes    
 
-   - name: Redirect port 80 to 9000 
-     action: command iptables -t nat -A OUTPUT -d localhost -p tcp --dport 80 -j REDIRECT --to-ports 9000
-
-   - name: Redirect port 80 to 9000 
-     action: command iptables -t nat -I PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 9000 
-
+   - name: Configure Authbind
+     action: copy content="" dest=/etc/authbind/byport/80 owner=$user group=$group mode=0500 
+ 
    - name: Remove old PVM checkouts
      action: file path=${pvm} state=absent
 
