@@ -21,8 +21,8 @@ And done. Your EC2 isntance should be ready to go.
 
 Scripts may contain variables that need to be customized for your specific deployments. The following scripts are available:
 
-* bootstrap.yaml: secures an EC2 Ubuntu AMI using steps taken from. Requires sudo.
-* playenv.yaml: sets play dependencies (pvm, java) including Authbind to Play can use port 80 without root privileges. Requires sudo.
+* bootstrap.yaml: secures an EC2 Ubuntu AMI. Requires sudo.
+* playenv.yaml: sets play dependencies (pvm, java) including Authbind so Play can use port 80 without root privileges. Requires sudo.
 * deploy.yaml: clones a Play project from a Git repository and deploys it on the machine. No sudo required.
 
 
