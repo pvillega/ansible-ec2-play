@@ -1,0 +1,68 @@
+# Clones and builds the application on the server
+# Assumes a working Play deployment (via pvm: https://github.com/kaiinkinen/pvm) and Git are available
+# WARNING: if your server has low memory (like a Micro EC2 instance) the build step may fail due to the OOM manager killing it. Enable swap or add more memory to the server.
+# Run with: ansible-playbook -i hosts.ini deploy.yaml -u ubuntu 
+---
+- hosts: ec2Instance
+  vars:
+  - ubuntu_release: quantal
+  - user: ubuntu
+  - group: ubuntu
+  - home: /home/ubuntu
+  - repo_url: git://github.com/pvillega/personal-page.git 
+  - repo_remote: origin
+  - repo_version: master
+  - play_version: 2.1.0
+  - pvm_path: ${home}/pvm/install/$play_version
+  - dest: ${home}/projectClone
+  - project_version: 1.2
+  - project: personal-page-$project_version
+
+
+  tasks:
+   - name: Remove old checkouts (just in case they are still in there)
+     action: file path=${dest} state=absent
+
+   - name: Checkout project from Git
+     action: git repo=$repo_url dest=$dest remote=$repo_remote version=$repo_version
+
+   # Create distribution async, polling every 10s (Default) for a max of 15m (60s * 15m = 900s)
+   - name: Create Dist deployment
+     action: shell cd ${dest} && ${pvm_path}/play dist 
+     async: 900
+
+   # We ignore errors as there may be no running Java process	
+   - name: Kill old processes to free ports and memory and so we can redeploy
+     action: command killall java -q
+     ignore_errors: yes
+
+   - name: Remove old deployment folder
+     action: file path=${home}/$project state=absent
+
+   - name: Remove old zip file
+     action: file path=${home}/$project.zip state=absent
+
+   - name: Copy zip to home folder
+     action: command cp ${dest}/dist/$project.zip ${home}/
+ 
+   - name: Unpack project
+     action: command unzip $project.zip chdir=${home} 
+ 
+   - name: Copy start script from source
+     action: command cp ${dest}/start ${home}/$project/start 
+   
+   - name: Chmod start script in project
+     action: file path=${home}/$project/start mode=0755 
+
+   - name: Remove old zip file (let's clean the house a bit)
+     action: file path=${home}/$project.zip state=absent
+
+   - name: Remove old checkouts (let's clean the house a bit)
+     action: file path=${dest} state=absent
+ 
+   # Launch project (asynchronously with fire-and-forget behaviour)
+   - name: Launch project
+     action: shell nohup ${home}/$project/start  
+     async: 10
+     poll: 0
+

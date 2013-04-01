@@ -27,10 +27,11 @@ Scripts may contain variables that need to be customized for your specific deplo
 * deploy.yaml: clones a Play project from a Git repository and deploys it on the machine. No sudo required.
 
 WARNING: I'm no sysadmin, so the scripts may contain some big mistake (especially in the security part), so be careful when executing them and be sure you understand what you are doing.
+WARNING: if you use a Micro EC2 instance the deployment script will fail (ubuntu will kill the build due to lack of memory), you will need to do that part manually
 
 Start file
 ========
-The setting assume the usage of [Authbind](http://en.wikipedia.org/wiki/Authbind) so Play can run on port 80 without sudo privileges. A `start` file is provided under folder `exec` that can be used as a template for your own `start` file.
+The settings assume the use of [Authbind](http://en.wikipedia.org/wiki/Authbind) so Play can run on port 80 without root privileges. A `start` file is provided under folder `exec` that can be used as a template for your own `start` file.
 
 Deployment scripts assume you place your customized `start` file at the root of the project cloned via git. Modify the script accordingly if that's not the case.
 
