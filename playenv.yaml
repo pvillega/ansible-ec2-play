@@ -10,9 +10,15 @@
   - repo_remote: origin
   - repo_version: master
   - pvm: /home/ubuntu/pvm
-  - play_version: 2.1.0
+  - play_version: 2.1.1
 
   tasks:
+   - name: Install Unzip
+     action: apt pkg=unzip state=latest install_recommends=yes    
+
+   - name: Install Git
+     action: apt pkg=git state=latest install_recommends=yes    
+
    - name: Install Authbind
      action: apt pkg=authbind state=latest install_recommends=yes    
 
